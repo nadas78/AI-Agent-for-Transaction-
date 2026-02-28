@@ -70,3 +70,25 @@ Le projet utilise un **dataset synthétique de transactions DeFi** généré en 
 - LoRA adapter léger : `./lora_adapter`
 - Dataset sauvegardé en JSON pour reproduire ou améliorer l’entraînement
 - Zip disponible pour téléchargement depuis Colab ou serveur
+## Exécution de l'application
+
+Pour lancer l'AI Agent et le front-end, suivez ces étapes :
+
+### 1️⃣ Lancer le backend FastAPI
+
+1. Ouvrez un terminal et placez-vous dans le dossier `backend` :
+
+```powershell
+cd "AI Agent\backend"
+et Lancez le serveur FastAPI :
+
+uvicorn backend:app --host 0.0.0.0 --port 8000 --reload
+2.Lancer le front-end Node / Angular
+
+Ouvrez un autre terminal et placez-vous dans le dossier du front-end :
+
+cd "AI Agent\defi-agent"
+
+Installez les dépendances si ce n’est pas déjà fait :
+
+npm install
