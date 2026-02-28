@@ -3,23 +3,24 @@ from fastapi import FastAPI
 from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
 from transformers import AutoTokenizer, AutoModelForCausalLM
-from peft import PeftModel
 import torch
+import os
 
 # =========================
 # 1️⃣ Configuration modèle
 # =========================
-# Remplacez par votre repo Hugging Face, exemple : "username/defi-chatbot"
-repo_id = "username/defi-chatbot"
 
-print("🔹 Chargement du modèle depuis Hugging Face...")
-base_model = AutoModelForCausalLM.from_pretrained(repo_id)
-model = PeftModel.from_pretrained(base_model, repo_id)
-tokenizer = AutoTokenizer.from_pretrained(repo_id)
+MODEL_PATH = "./exported_model"  # ✅ ton dossier local
+
+print("🔹 Chargement du modèle local...")
+
+tokenizer = AutoTokenizer.from_pretrained(MODEL_PATH)
+model = AutoModelForCausalLM.from_pretrained(MODEL_PATH)
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
 model.to(device)
 model.eval()
+
 print(f"✅ Modèle chargé sur {device}")
 
 # =========================
@@ -29,7 +30,7 @@ app = FastAPI(title="DeFi AI Agent")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # remplacer "*" par le frontend autorisé en prod
+    allow_origins=["*"],  # ⚠️ à restreindre en prod
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -49,16 +50,13 @@ class Query(BaseModel):
 # =========================
 @app.post("/predict")
 def predict(query: Query):
-    # Prompt identique au fine-tuning
     prompt = (
         f"{query.text}\n"
         "Provide technical explanation, simplified explanation, severity, recommended fix and confidence:"
     )
 
-    # Tokenization
     inputs = tokenizer(prompt, return_tensors="pt").to(device)
 
-    # Génération
     with torch.no_grad():
         output_ids = model.generate(
             **inputs,
@@ -67,19 +65,21 @@ def predict(query: Query):
             temperature=query.temperature,
             do_sample=True,
             pad_token_id=tokenizer.eos_token_id,
-            eos_token_id=tokenizer.eos_token_id
+            eos_token_id=tokenizer.eos_token_id,
         )
 
-    # Décodage
     output_text = tokenizer.decode(output_ids[0], skip_special_tokens=True)
 
-    # Supprimer le prompt initial si présent
-    if output_text.startswith(query.text):
-        output_text = output_text[len(query.text):].strip()
+    # 🔹 nettoyage du prompt
+    if output_text.startswith(prompt):
+        output_text = output_text[len(prompt):].strip()
 
-    return {"input": query.text, "output": output_text}
+    return {
+        "input": query.text,
+        "output": output_text
+    }
 
 # =========================
 # 5️⃣ Run avec uvicorn
 # =========================
-# Pour exécuter : uvicorn backend:app --host 0.0.0.0 --port 8000 --reload
+# uvicorn backend:app --host 0.0.0.0 --port 8000 --reload
