@@ -4,7 +4,7 @@ Le projet utilise un **dataset synthétique de transactions DeFi** généré en 
 
 ### Génération des données
 
-- **Nombre de lignes** : 5000 samples.
+- **Nombre de lignes** : 1500 samples.
 - **Contenu** : chaque sample contient un input en langage naturel décrivant une transaction échouée et un output structuré comprenant :
   - `Technical Explanation` : explication technique de l’erreur.
   - `Simplified Explanation` : version simple compréhensible par un utilisateur.
